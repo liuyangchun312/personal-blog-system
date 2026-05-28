@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.blog.common.PageResult;
 import com.example.blog.dto.ArticleNavigation;
 import com.example.blog.dto.ArticleRequest;
+import com.example.blog.dto.ArchiveGroup;
 import com.example.blog.dto.PrevNextArticle;
 import com.example.blog.entity.Article;
 import com.example.blog.entity.ArticleTag;
@@ -18,6 +19,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ArticleService {
@@ -91,6 +93,19 @@ public class ArticleService {
     public long totalViews() {
         return articleMapper.selectList(new LambdaQueryWrapper<Article>().select(Article::getViewCount))
                 .stream().mapToLong(a -> a.getViewCount() == null ? 0 : a.getViewCount()).sum();
+    }
+
+    public List<ArchiveGroup> archives() {
+        return articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                        .eq(Article::getStatus, "PUBLISHED")
+                        .orderByDesc(Article::getPublishedAt))
+                .stream()
+                .collect(Collectors.groupingBy(a -> a.getPublishedAt() == null ? "未发布" : a.getPublishedAt().toLocalDate().withDayOfMonth(1).toString()))
+                .entrySet()
+                .stream()
+                .map(e -> new ArchiveGroup(e.getKey(), e.getValue()))
+                .sorted((a, b) -> b.month().compareTo(a.month()))
+                .toList();
     }
 
     private PrevNextArticle toNav(Article article) {

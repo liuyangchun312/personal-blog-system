@@ -3,6 +3,7 @@ package com.example.blog.controller;
 import com.example.blog.common.ApiResponse;
 import com.example.blog.common.PageResult;
 import com.example.blog.dto.ArticleNavigation;
+import com.example.blog.dto.ArchiveGroup;
 import com.example.blog.dto.CommentRequest;
 import com.example.blog.dto.MessageRequest;
 import com.example.blog.entity.*;
@@ -50,6 +51,11 @@ public class PublicController {
     @GetMapping("/articles/hot")
     public ApiResponse<List<Article>> hot(@RequestParam(defaultValue = "5") int limit) {
         return ApiResponse.ok(articleService.hot(limit));
+    }
+
+    @GetMapping("/archives")
+    public ApiResponse<List<ArchiveGroup>> archives() {
+        return ApiResponse.ok(articleService.archives());
     }
 
     @GetMapping("/categories")

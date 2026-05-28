@@ -23,7 +23,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/doc.html").permitAll()
+                        .requestMatchers("/auth/login", "/actuator/health", "/actuator/health/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/doc.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/public/**", "/sitemap.xml", "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/public/comments", "/public/messages").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

@@ -4,6 +4,7 @@ import ArticleDetail from '../views/ArticleDetail.vue'
 import About from '../views/About.vue'
 import Links from '../views/Links.vue'
 import MessageBoard from '../views/MessageBoard.vue'
+import Archives from '../views/Archives.vue'
 import Login from '../views/Login.vue'
 import Admin from '../views/Admin.vue'
 import NotFound from '../views/NotFound.vue'
@@ -14,6 +15,7 @@ const routes = [
   { path: '/about', component: About },
   { path: '/links', component: Links },
   { path: '/messages', component: MessageBoard },
+  { path: '/archives', component: Archives },
   { path: '/login', component: Login },
   { path: '/admin', component: Admin, meta: { auth: true } },
   { path: '/:pathMatch(.*)*', component: NotFound }

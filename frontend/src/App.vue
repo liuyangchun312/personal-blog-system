@@ -4,6 +4,7 @@
       <router-link class="brand" to="/">{{ config.siteTitle || '企业级个人博客' }}</router-link>
       <nav>
         <router-link to="/">首页</router-link>
+        <router-link to="/archives">归档</router-link>
         <router-link to="/about">关于我</router-link>
         <router-link to="/links">友链</router-link>
         <router-link to="/messages">留言板</router-link>
