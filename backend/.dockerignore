@@ -1,0 +1,4 @@
+target/*
+!target/enterprise-blog-1.0.0.jar
+.mvn
+*.log
