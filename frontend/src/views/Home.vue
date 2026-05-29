@@ -1,13 +1,28 @@
 <template>
-  <section class="layout">
-    <div>
+  <section class="home-shell">
+    <section class="hero-panel">
+      <div class="hero-copy">
+        <span class="hero-kicker">Personal Blog / Digital Garden</span>
+        <h1>把灵感、代码和生活切片，收进一个会发光的博客。</h1>
+        <p>这里是文章、分类、标签与留言的入口。功能保持原样，只让阅读体验更像一个有态度的个人空间。</p>
+      </div>
+      <div class="hero-orbit" aria-hidden="true">
+        <span class="orbit-card orbit-card-one">BLOG</span>
+        <span class="orbit-card orbit-card-two">IDEAS</span>
+        <span class="orbit-card orbit-card-three">NOTES</span>
+      </div>
+    </section>
+
+    <section class="layout">
+    <div class="feed-panel">
       <div class="toolbar">
         <el-input v-model="keyword" placeholder="搜索文章标题、摘要或正文" clearable @keyup.enter="load" />
         <el-button type="primary" @click="load">搜索</el-button>
       </div>
-      <article v-for="item in page.records" :key="item.id" class="article-card">
+      <article v-for="(item, index) in page.records" :key="item.id" class="article-card">
         <img v-if="item.coverUrl" :src="item.coverUrl" alt="" />
         <div>
+          <span class="article-index">{{ String(index + 1).padStart(2, '0') }}</span>
           <router-link class="article-title" :to="`/article/${item.slug}`">{{ item.title }}</router-link>
           <p>{{ item.summary }}</p>
           <div class="article-card-tags">
@@ -31,6 +46,7 @@
       <h3>最新文章</h3>
       <router-link v-for="a in latest" :key="a.id" :to="`/article/${a.slug}`" class="side-link">{{ a.title }}</router-link>
     </aside>
+    </section>
   </section>
 </template>
 <script setup>
