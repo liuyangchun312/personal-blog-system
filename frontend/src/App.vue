@@ -1,7 +1,7 @@
 <template>
   <el-container>
     <el-header class="topbar">
-      <router-link class="brand" to="/">{{ config.siteTitle || '企业级个人博客' }}</router-link>
+      <router-link class="brand" to="/">{{ config.siteTitle || '刘杨春的博客' }}</router-link>
       <nav>
         <router-link to="/">首页</router-link>
         <router-link to="/archives">归档</router-link>

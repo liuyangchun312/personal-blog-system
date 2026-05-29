@@ -123,7 +123,7 @@ INSERT IGNORE INTO blog_article(title, slug, summary, content, category_id, stat
 ('欢迎使用企业级个人博客系统', 'welcome', '系统初始化文章，可在后台编辑或删除。', '<h2>欢迎</h2><p>这是可容器化部署的 Java + Vue 博客系统。</p>', 1, 'PUBLISHED', NOW(), '欢迎使用企业级个人博客系统', 'Java,Spring Boot,Vue', '企业级个人博客系统初始化文章');
 INSERT IGNORE INTO blog_article_tag(article_id, tag_id) VALUES (1, 1), (1, 2);
 INSERT IGNORE INTO sys_config(config_key, config_value, description) VALUES
-('siteTitle', '企业级个人博客', '网站标题'),
+('siteTitle', '刘杨春的博客', '网站标题'),
 ('logo', '/logo.svg', '网站 Logo'),
 ('icp', '请在后台配置ICP备案号', 'ICP备案'),
 ('about', '这里是关于我页面内容，可在后台配置。', '关于我'),

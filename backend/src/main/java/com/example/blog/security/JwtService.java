@@ -14,9 +14,11 @@ import java.util.Map;
 @Service
 public class JwtService {
     private final SecretKey key;
+    private final long expireSeconds;
 
-    public JwtService(@Value("${blog.jwt-secret}") String secret) {
+    public JwtService(@Value("${blog.jwt-secret}") String secret, @Value("${blog.jwt-expire-seconds}") long expireSeconds) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expireSeconds = expireSeconds;
     }
 
     public String createToken(String username, String role) {
@@ -25,7 +27,7 @@ public class JwtService {
                 .subject(username)
                 .claims(Map.of("role", role))
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(86400)))
+                .expiration(Date.from(now.plusSeconds(expireSeconds)))
                 .signWith(key)
                 .compact();
     }

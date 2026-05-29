@@ -10,6 +10,8 @@ server:
 spring:
   application:
     name: enterprise-blog
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:enterprise_blog}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
@@ -39,6 +41,7 @@ mybatis-plus:
 
 blog:
   jwt-secret: ${JWT_SECRET:change-this-secret-to-at-least-32-characters}
+  jwt-expire-seconds: ${JWT_EXPIRE_SECONDS:315360000}
   upload-dir: ${UPLOAD_DIR:./uploads}
   public-base-url: ${PUBLIC_BASE_URL:http://localhost:5173}
   backup-dir: ${BACKUP_DIR:./backups}
@@ -64,5 +67,31 @@ management:
         include: health,info,metrics
   endpoint:
     health:
+      show-details: when_authorized
       probes:
         enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+server:
+  forward-headers-strategy: native
+blog:
+  public-base-url: ${PUBLIC_BASE_URL:http://localhost:5173}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+server:
+  forward-headers-strategy: framework
+blog:
+  public-base-url: ${PUBLIC_BASE_URL:https://example.com}

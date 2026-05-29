@@ -10,7 +10,11 @@
         <div>
           <router-link class="article-title" :to="`/article/${item.slug}`">{{ item.title }}</router-link>
           <p>{{ item.summary }}</p>
-          <span>{{ item.publishedAt?.replace('T', ' ') }} · 阅读 {{ item.viewCount }}</span>
+          <div class="article-card-tags">
+            <el-tag v-if="item.category" size="small" type="info">{{ item.category.name }}</el-tag>
+            <el-tag v-for="tag in item.tags || []" :key="tag.id" size="small" type="success">{{ tag.name }}</el-tag>
+          </div>
+          <span>{{ item.publishedAt?.replace('T', ' ').slice(0, 16) }} · 阅读 {{ item.viewCount || 0 }}</span>
         </div>
       </article>
       <el-empty v-if="!page.records.length" description="暂无文章" />
@@ -19,9 +23,9 @@
     <aside>
       <h3>分类导航</h3>
       <el-tag class="tag" @click="clearFilter">全部</el-tag>
-      <el-tag v-for="c in categories" :key="c.id" class="tag" @click="filterCategory(c.id)">{{ c.name }}</el-tag>
+      <el-tag v-for="c in categories" :key="c.id" class="tag" :type="categoryId === c.id ? 'primary' : 'info'" @click="filterCategory(c.id)">{{ c.name }}</el-tag>
       <h3>标签云</h3>
-      <el-tag v-for="t in tags" :key="t.id" class="tag tag-cloud" type="success" @click="filterTag(t.id)">{{ t.name }}</el-tag>
+      <el-tag v-for="t in tags" :key="t.id" class="tag tag-cloud" :type="tagId === t.id ? 'success' : 'info'" @click="filterTag(t.id)">{{ t.name }}</el-tag>
       <h3>热门文章</h3>
       <router-link v-for="a in hot" :key="a.id" :to="`/article/${a.slug}`" class="side-link">{{ a.title }}</router-link>
       <h3>最新文章</h3>
@@ -30,8 +34,11 @@
   </section>
 </template>
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import http from '../api/http'
+const route = useRoute()
+const router = useRouter()
 const keyword = ref('')
 const categoryId = ref(null)
 const tagId = ref(null)
@@ -40,11 +47,22 @@ const categories = ref([])
 const tags = ref([])
 const hot = ref([])
 const latest = ref([])
+const numberOrNull = value => value ? Number(value) : null
+const syncFromQuery = () => {
+  categoryId.value = numberOrNull(route.query.categoryId)
+  tagId.value = numberOrNull(route.query.tagId)
+}
 const load = async () => Object.assign(page, await http.get('/public/articles', { params: { page: page.page, size: page.size, keyword: keyword.value, categoryId: categoryId.value, tagId: tagId.value } }))
-const filterCategory = id => { categoryId.value = id; tagId.value = null; page.page = 1; load() }
-const filterTag = id => { tagId.value = id; categoryId.value = null; page.page = 1; load() }
-const clearFilter = () => { categoryId.value = null; tagId.value = null; keyword.value = ''; page.page = 1; load() }
+const pushFilter = query => router.push({ path: '/', query })
+const filterCategory = id => { page.page = 1; pushFilter({ categoryId: id }) }
+const filterTag = id => { page.page = 1; pushFilter({ tagId: id }) }
+const clearFilter = () => { categoryId.value = null; tagId.value = null; keyword.value = ''; page.page = 1; pushFilter({}) }
+watch(() => route.query, async () => {
+  syncFromQuery()
+  await load()
+})
 onMounted(async () => {
+  syncFromQuery()
   await load()
   categories.value = await http.get('/public/categories')
   tags.value = await http.get('/public/tags')

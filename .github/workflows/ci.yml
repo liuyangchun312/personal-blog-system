@@ -23,7 +23,9 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Build backend
         working-directory: backend
-        run: mvn -q -DskipTests package
+        run: mvn -q test package
       - name: Build frontend
         working-directory: frontend
         run: npm ci && npm run build
+      - name: Validate Docker Compose config
+        run: docker compose -p enterprise-blog config --quiet

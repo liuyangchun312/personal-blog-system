@@ -9,8 +9,12 @@ import com.example.blog.dto.ArchiveGroup;
 import com.example.blog.dto.PrevNextArticle;
 import com.example.blog.entity.Article;
 import com.example.blog.entity.ArticleTag;
+import com.example.blog.entity.Category;
+import com.example.blog.entity.Tag;
 import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.mapper.ArticleTagMapper;
+import com.example.blog.mapper.CategoryMapper;
+import com.example.blog.mapper.TagMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -25,13 +29,17 @@ import java.util.stream.Collectors;
 public class ArticleService {
     private final ArticleMapper articleMapper;
     private final ArticleTagMapper articleTagMapper;
+    private final CategoryMapper categoryMapper;
+    private final TagMapper tagMapper;
 
-    public ArticleService(ArticleMapper articleMapper, ArticleTagMapper articleTagMapper) {
+    public ArticleService(ArticleMapper articleMapper, ArticleTagMapper articleTagMapper, CategoryMapper categoryMapper, TagMapper tagMapper) {
         this.articleMapper = articleMapper;
         this.articleTagMapper = articleTagMapper;
+        this.categoryMapper = categoryMapper;
+        this.tagMapper = tagMapper;
     }
 
-    @Cacheable(value = "articlePages", key = "#page + ':' + #size + ':' + #keyword + ':' + #categoryId")
+    @Cacheable(value = "articlePages", key = "#page + ':' + #size + ':' + #keyword + ':' + #categoryId + ':' + #tagId")
     public PageResult<Article> publicPage(long page, long size, String keyword, Long categoryId, Long tagId) {
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<Article>()
                 .eq(Article::getStatus, "PUBLISHED")
@@ -47,11 +55,13 @@ public class ArticleService {
             wrapper.in(Article::getId, ids);
         }
         Page<Article> result = articleMapper.selectPage(Page.of(page, size), wrapper);
+        hydrateArticles(result.getRecords());
         return new PageResult<>(result.getTotal(), result.getCurrent(), result.getSize(), result.getRecords());
     }
 
     public PageResult<Article> adminPage(long page, long size) {
         Page<Article> result = articleMapper.selectPage(Page.of(page, size), new LambdaQueryWrapper<Article>().orderByDesc(Article::getCreatedAt));
+        hydrateArticles(result.getRecords());
         return new PageResult<>(result.getTotal(), result.getCurrent(), result.getSize(), result.getRecords());
     }
 
@@ -63,15 +73,20 @@ public class ArticleService {
         }
         article.setViewCount(article.getViewCount() == null ? 1 : article.getViewCount() + 1);
         articleMapper.updateById(article);
+        hydrateArticle(article);
         return article;
     }
 
     public List<Article> latest(int limit) {
-        return articleMapper.selectList(new LambdaQueryWrapper<Article>().eq(Article::getStatus, "PUBLISHED").orderByDesc(Article::getPublishedAt).last("limit " + Math.min(limit, 20)));
+        List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>().eq(Article::getStatus, "PUBLISHED").orderByDesc(Article::getPublishedAt).last("limit " + Math.min(limit, 20)));
+        hydrateArticles(articles);
+        return articles;
     }
 
     public List<Article> hot(int limit) {
-        return articleMapper.selectList(new LambdaQueryWrapper<Article>().eq(Article::getStatus, "PUBLISHED").orderByDesc(Article::getViewCount).last("limit " + Math.min(limit, 20)));
+        List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>().eq(Article::getStatus, "PUBLISHED").orderByDesc(Article::getViewCount).last("limit " + Math.min(limit, 20)));
+        hydrateArticles(articles);
+        return articles;
     }
 
     public ArticleNavigation navigation(String slug) {
@@ -96,10 +111,11 @@ public class ArticleService {
     }
 
     public List<ArchiveGroup> archives() {
-        return articleMapper.selectList(new LambdaQueryWrapper<Article>()
-                        .eq(Article::getStatus, "PUBLISHED")
-                        .orderByDesc(Article::getPublishedAt))
-                .stream()
+        List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                .eq(Article::getStatus, "PUBLISHED")
+                .orderByDesc(Article::getPublishedAt));
+        hydrateArticles(articles);
+        return articles.stream()
                 .collect(Collectors.groupingBy(a -> a.getPublishedAt() == null ? "未发布" : a.getPublishedAt().toLocalDate().withDayOfMonth(1).toString()))
                 .entrySet()
                 .stream()
@@ -145,11 +161,30 @@ public class ArticleService {
                 articleTagMapper.insert(at);
             }
         }
+        hydrateArticle(article);
         return article;
     }
 
     @CacheEvict(value = {"articlePages", "articleDetail"}, allEntries = true)
     public void delete(Long id) {
+        articleTagMapper.delete(new LambdaQueryWrapper<ArticleTag>().eq(ArticleTag::getArticleId, id));
         articleMapper.deleteById(id);
+    }
+
+    private void hydrateArticles(List<Article> articles) {
+        articles.forEach(this::hydrateArticle);
+    }
+
+    private void hydrateArticle(Article article) {
+        if (article == null) return;
+        if (article.getCategoryId() != null) {
+            Category category = categoryMapper.selectById(article.getCategoryId());
+            article.setCategory(category);
+        }
+        List<Long> tagIds = articleTagMapper.selectList(new LambdaQueryWrapper<ArticleTag>().eq(ArticleTag::getArticleId, article.getId()))
+                .stream()
+                .map(ArticleTag::getTagId)
+                .toList();
+        article.setTags(tagIds.isEmpty() ? List.of() : tagMapper.selectBatchIds(tagIds));
     }
 }
